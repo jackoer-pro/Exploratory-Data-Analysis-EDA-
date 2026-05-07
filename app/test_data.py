@@ -108,5 +108,22 @@ df_raw[mask_debt].to_csv(r"C:\Users\Trach\OneDrive\Desktop\python journey\Projec
 df_raw[mask_anon_sale].to_csv(r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\data\processed\anonymous.csv",index=False)
 print("saved sucessfully")
 # %%
-sales = pd.read_excel(r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\data\processed\sales.csv", parse_dates=["InvoiceDate"])
+sales = pd.read_csv(r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\data\processed\sales.csv", parse_dates=["InvoiceDate"])
 sales["Revenue"]=sales["Quantity"]*sales["UnitPrice"]
+print(sales["Revenue"].describe())
+# %%
+sales["Month"]= sales["InvoiceDate"].dt.to_period("M")
+monthly_revenue= sales.groupby("Month")["Revenue"].sum()
+print(monthly_revenue)
+# %%
+import matplotlib.pyplot as plt
+monthly_revenue.plot(
+    figsize=(12,4),
+    marker="o",
+    color="steelblue"
+)
+plt.title("Monthly revenue — when does money come in?")
+plt.ylabel("Revenue (£)")
+plt.tight_layout()
+plt.show()
+# %%
