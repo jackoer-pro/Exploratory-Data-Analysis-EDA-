@@ -122,8 +122,64 @@ monthly_revenue.plot(
     marker="o",
     color="steelblue"
 )
+plt.ticklabel_format(style='plain', axis='y')
 plt.title("Monthly revenue — when does money come in?")
 plt.ylabel("Revenue (£)")
 plt.tight_layout()
 plt.show()
+# %%
+# 10 product with the highest revenue
+mask_postage=sales["Description"]=="POSTAGE"
+mask_manual=sales["Description"]=="Manual"
+mask_dotcom=sales["Description"]=="DOTCOM POSTAGE"
+mask_exclude = mask_postage | mask_manual | mask_dotcom
+sales_product=sales[mask_exclude==False]
+product_revenue=sales_product.groupby("Description")["Revenue"].sum()
+top10_revenue = product_revenue.nlargest(10)
+print(top10_revenue)
+
+plt.figure(figsize=(10, 8))
+top10_revenue.plot(kind='barh', color='skyblue')
+
+plt.title('Top 10 Products by Revenue', fontsize=14)
+plt.xlabel("Total Revenue")
+plt.tight_layout()
+plt.show()
+# INSIGHT: Postage = £77K revenue, correlates with order volume
+# STRATEGIC QUESTION: At what order volume does in-house logistics become cheaper?
+# WARNING: PAPER CRAFT top revenue inflated by single 80,995 unit order
+# that was immediately returned — net revenue for this product = ~£0
+# Real top product is likely REGENCY CAKESTAND at £142K
+# %%
+# Day with the highest consumption
+sales["Date"]=sales["InvoiceDate"].dt.weekday
+Daily_revenue=sales.groupby("Date")["Revenue"].sum()
+print(Daily_revenue)
+Daily_revenue.plot(
+    figsize=(14,8),
+    marker="o",
+    color="steelblue"
+)
+plt.ticklabel_format(style='plain', axis='y')
+plt.xticks(range(7), ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+plt.title("Daily sale")
+plt.ylabel("Total Revenue")
+plt.tight_layout()
+plt.show()
+# INSIGHT: Zero Saturday trading confirms B2B wholesale customer base
+# Customers are businesses ordering during business hours
+# Thursday have a highest demand -> more product for this day (promotion)
+# %%
+mask_except_UK=sales["Country"]!="United Kingdom"
+country_revenue=sales[mask_except_UK].groupby("Country")["Revenue"].sum().sort_values(ascending=False).head(10)
+print(country_revenue)
+country_revenue.plot(kind="barh",figsize=(14,5),color="steelblue")
+plt.title("Top 10 country with highest revenue")
+plt.xlabel("Total Revenue")
+plt.tight_layout()
+plt.show()
+# INSIGHT: Netherlands #1 non-UK market — prioritise for expansion
+# INSIGHT: EIRE #2 — proximity + shared language = low cost to serve, protect this
+# INSIGHT: Australia #5 despite distance — likely British diaspora buying UK gifts
+# ACTION: Run targeted promotions for top 5 countries before peak season (Oct-Nov)
 # %%
