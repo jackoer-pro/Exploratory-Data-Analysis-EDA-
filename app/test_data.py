@@ -183,3 +183,31 @@ plt.show()
 # INSIGHT: Australia #5 despite distance — likely British diaspora buying UK gifts
 # ACTION: Run targeted promotions for top 5 countries before peak season (Oct-Nov)
 # %%
+# Finding top customers
+# the percentage of revenues assign for specific percent of customers
+customer_spend = sales.groupby("CustomerID")["Revenue"].sum().sort_values(ascending=False)
+print(customer_spend.describe())
+
+total_customers=len(customer_spend)
+top_20_cutoff= int(len(customer_spend) * 0.2)
+
+top_20_revenue=customer_spend.sort_values(ascending=False).iloc[:top_20_cutoff].sum()
+total_revenue=customer_spend.sum()
+
+print(f"Total customers:{total_customers:,}")
+print(f"Top 20% = {top_20_cutoff} customers")
+print(f"Their revenue share:{top_20_revenue/total_revenue:.0%}")
+
+# %%
+# find precentage of customer account for certain percentage of revenue
+cumulative=customer_spend.cumsum()
+total=customer_spend.sum()
+customers_needed= (cumulative <= total*0.8).sum()
+pct_of_base      = customers_needed / len(customer_spend)
+print(f"Customers needed for 80% revenue : {customers_needed:,}")
+print(f"As % of total customer base      : {pct_of_base:.1%}")
+# 26% of customers (1,132) generate 80% of revenue
+# LOSING 100 top cusotmers = LOSING of 1000 bottom ones
+# ACTION: GIVING MORE RETENTION MORE DISCOUNTS FOR TOP CUSTOMER
+# ACTION: Identify who haven't ordered in last 60 days, contact them immediately
+# %%
