@@ -3,7 +3,7 @@
 # %%
 import pandas as pd
 df_raw = pd.read_excel(
-    r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\data\Online Retail.xlsx",
+    "\Project_4\data\Online Retail.xlsx",
     dtype={"CustomerID": str}
 )
 #%%
