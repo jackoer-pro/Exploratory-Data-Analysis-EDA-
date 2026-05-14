@@ -20,6 +20,8 @@ plt.title("Monthly revenue — when does money come in?")
 plt.ylabel("Revenue (£)")
 plt.tight_layout()
 plt.show()
+# Insight: peak month is November
+# Action: stock more products on October
 # %%
 # 10 product with the highest revenue
 mask_postage=sales["Description"]=="POSTAGE"
@@ -148,4 +150,54 @@ print(f"Revenue at risk: £{rev:,.2f}")
 # Every unit sold costs: original shipping + return shipping + reprocessing
 # Net revenue on this product is likely NEGATIVE after return costs
 # ACTION: Immediate supplier quality review + suspend new orders this week
+# %%
+reference_date=sales["InvoiceDate"].max()+pd.Timedelta(days=1)
+rfm=sales.groupby("CustomerID").agg(
+    Recency=("InvoiceDate", lambda x:(reference_date-x.max()).days),
+    Frequency=("InvoiceNo",  lambda x: x.nunique()),
+    Monetary=("Revenue", lambda x: x.sum())
+).reset_index()
+print(rfm.head(10))
+print(rfm.describe())
+# %%
+print(rfm.loc[rfm["Recency"].idxmax()])
+print(rfm.loc[rfm["Frequency"].idxmax()])
+print(rfm.loc[rfm["Monetary"].idxmax()])
+rfm["R"]=pd.qcut(rfm["Recency"], q=5, labels=[5,4,3,2,1])
+rfm["F"]=pd.qcut(rfm["Frequency"].rank(method="first"), q=5, labels=[1,2,3,4,5])
+rfm["M"]=pd.qcut(rfm["Monetary"], q=5, labels=[1,2,3,4,5])
+print(rfm.head(10))
+def customer_segment(row):
+    r=row["R"]
+    f=row["F"]
+    m=row["M"]
+    if r >= 4 and f >= 4 and m >= 4:
+        return "Champion"
+    elif r>=3 and f>=3:
+        return "Loyal"
+    elif r>=4:
+        return "New customer"
+    elif m >= 4 and r <= 2 and f <= 1:
+        return "Lost high value"
+    elif m >= 4 and r <= 2:
+        return "At risk"
+    else:
+        return "Normal"
+rfm["Seg"]=rfm.apply(customer_segment,axis=1)
+print(rfm.head(10))
+# Later I figured out some customer bought decent amount but for 1 times and quit for long time => not worth chasing they are just testing supplier
+# Action: Add another segmentation, the action for those type of cusotmer send one email to ask or advertise not worth investing in long term 
+# %%
+print(rfm["Seg"].value_counts())
+# %%
+seg_summary=rfm.groupby("Seg").agg(
+    Customers=("CustomerID", "count"),
+    Revenue=("Monetary","sum")
+).reset_index()
+seg_summary["Rev_pct"]=(seg_summary["Revenue"]/seg_summary["Revenue"].sum().round(1))
+print(seg_summary.sort_values("Revenue", ascending=False))
+# INSIGHT: 962 Champions = 65% of revenue
+# INSIGHT: 296 At Risk customers = £687K potentially leaving
+# ACTION : Contact At Risk customers before they hit 120 days inactive
+# ACTION : Nurture 319 New customers — even converting 10% to Loyal = significant upside
 # %%
