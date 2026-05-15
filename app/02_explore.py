@@ -200,4 +200,53 @@ print(seg_summary.sort_values("Revenue", ascending=False))
 # INSIGHT: 296 At Risk customers = £687K potentially leaving
 # ACTION : Contact At Risk customers before they hit 120 days inactive
 # ACTION : Nurture 319 New customers — even converting 10% to Loyal = significant upside
+# Priority order for sale team
+# 1. At risk: every day you are not calling them is the day closer to  losing them permanently
+# 2. Champion
+# 3. New customer
+# %%
+import matplotlib.pyplot as plt
+# visualise the percentage of thing each segment
+plt.pie(seg_summary["Rev_pct"], labels=seg_summary['Seg'])
+plt.title('Pie Chart')
+plt.show()
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+# 2. Left chart: Customers
+ax1.bar(seg_summary['Seg'], seg_summary['Customers'])
+ax1.set_title('Customers')
+ax1.tick_params(axis='x', rotation=30)
+# 3. Right chart: Percentage
+ax2.bar(seg_summary['Seg'], seg_summary['Rev_pct'] * 100)
+ax2.set_title('Percentage')
+ax2.tick_params(axis='x', rotation=30)
+# show it 
+plt.tight_layout()
+plt.show()
+# %%
+plt.figure(figsize=(11, 7))
+for segment in rfm["Seg"].unique():
+    mask = rfm["Seg"] == segment
+    plt.scatter(
+        rfm[mask]["Recency"], 
+        rfm[mask]["Monetary"], 
+        label=segment, 
+        alpha=0.4,       
+        s=30,            
+        edgecolors='none' 
+    )
+
+plt.title("Customer Behavioral Mapping (Recency vs. Monetary)", fontsize=14, fontweight='bold', pad=15)
+plt.xlabel("Recency (Days since last purchase — LOWER is better)", fontsize=11)
+plt.ylabel("Monetary (Total money spent — HIGHER is better)", fontsize=11)
+
+plt.legend(title="Customer Segments", bbox_to_anchor=(1.05, 1), loc='upper left', frameon=True)
+
+plt.tight_layout()
+plt.show()
+# %%
+rfm.to_csv(r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\data\processed\segment.csv")
+action_list=rfm[rfm["Seg"].isin(["At risk", "Champion"])].sort_values("Monetary",ascending=False)
+[["CustomerID", "Seg", "Recency", "Frequency", "Monetary"]]
+action_list.to_csv(r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\data\processed\action_list.csv", index=False)
+print(f"Priority contacts this week: {len(action_list)} customers")
 # %%
