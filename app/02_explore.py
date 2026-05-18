@@ -116,7 +116,7 @@ mask_manual_r=returns["Description"]=="Manual"
 mask_dotcom_r=returns["Description"]=="DOTCOM POSTAGE"
 mask_bank_r=returns["Description"]=="Bank Charges"
 mask_exclude_r = mask_postage_r | mask_manual_r | mask_dotcom_r | mask_bank_r
-returns_clean=returns[mask_exclude==False]
+returns_clean=returns[mask_exclude_r==False]
 return_by_product=returns_clean.groupby("Description")["ReturnRevenue"].sum()
 return_rate= (return_by_product/product_revenue).dropna()
 return_rate_clean = return_rate[
@@ -130,9 +130,9 @@ minimum=100
 eligible=product_revenue[product_revenue>minimum].index
 return_rate_meaningful=return_rate_clean[return_rate_clean.index.isin(eligible)]
 avg_rate = return_rate_meaningful.mean()
-print(f"Average return rate (filtered): {avg_return_rate:.1%}")
-print(f"\nProducts above 3x average ({avg_return_rate*3:.1%}):")
-print(return_rate_meaningful[return_rate_meaningful > avg_return_rate * 3]
+print(f"Average return rate (filtered): {avg_rate:.1%}")
+print(f"\nProducts above 3x average ({avg_rate*3:.1%}):")
+print(return_rate_meaningful[return_rate_meaningful > avg_rate * 3]
       .sort_values(ascending=False).head(10))
 # %%
 # MEDIUM CERAMIC TOP STORAGE JAR  have the highest return rate so we need to investigate where it is trivial damage or a big one
@@ -194,7 +194,8 @@ seg_summary=rfm.groupby("Seg").agg(
     Customers=("CustomerID", "count"),
     Revenue=("Monetary","sum")
 ).reset_index()
-seg_summary["Rev_pct"]=(seg_summary["Revenue"]/seg_summary["Revenue"].sum().round(1))
+seg_summary["Rev_pct"] = (seg_summary["Revenue"] / 
+                          seg_summary["Revenue"].sum() * 100).round(1)
 print(seg_summary.sort_values("Revenue", ascending=False))
 # INSIGHT: 962 Champions = 65% of revenue
 # INSIGHT: 296 At Risk customers = £687K potentially leaving
@@ -210,6 +211,7 @@ import matplotlib.pyplot as plt
 plt.pie(seg_summary["Rev_pct"], labels=seg_summary['Seg'])
 plt.title('Pie Chart')
 plt.show()
+#
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 # 2. Left chart: Customers
 ax1.bar(seg_summary['Seg'], seg_summary['Customers'])
@@ -249,4 +251,45 @@ action_list=rfm[rfm["Seg"].isin(["At risk", "Champion"])].sort_values("Monetary"
 [["CustomerID", "Seg", "Recency", "Frequency", "Monetary"]]
 action_list.to_csv(r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\data\processed\action_list.csv", index=False)
 print(f"Priority contacts this week: {len(action_list)} customers")
+# %%
+fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+fig.suptitle("Retail Intelligence — Business Brief", 
+             fontsize=16, fontweight="bold")
+
+# Panel 1 — monthly revenue
+monthly_revenue.plot(ax=axes[0,0], color="steelblue", marker="o")
+axes[0,0].set_title("Monthly revenue — peak in November", fontweight="bold")
+axes[0,0].set_xlabel("")
+axes[0,0].yaxis.set_major_formatter(
+    plt.FuncFormatter(lambda x, _: f"£{x/1e6:.1f}M"))
+
+# Panel 2 — segment revenue %
+seg_summary.sort_values("Rev_pct").plot(
+    kind="barh", color="steelblue",
+    ax=axes[0,1], x="Seg", y="Rev_pct", legend=False)
+axes[0,1].set_title("Revenue % by customer segment", fontweight="bold")
+axes[0,1].set_xlabel("% of total revenue")
+axes[0,1].xaxis.set_major_formatter(
+    plt.FuncFormatter(lambda x, _: f"{x:.0f}%"))
+
+# Panel 3 — customer count
+seg_summary.sort_values("Customers").plot(
+    kind="barh", color="steelblue",
+    ax=axes[1,0], x="Seg", y="Customers", legend=False)
+axes[1,0].set_title("Customers per segment", fontweight="bold")
+axes[1,0].set_xlabel("Number of customers")
+
+# Panel 4 — return rate products
+top_returns = return_rate_meaningful.sort_values(ascending=False).head(10)
+# shorten long product names
+short_names = [n[:20] + "..." if len(n) > 20 else n for n in top_returns.index]
+axes[1,1].barh(short_names, top_returns.values*100 , color="coral")
+axes[1,1].set_title("Top 10 highest return rate products", fontweight="bold")
+axes[1,1].set_xlabel("Return rate %")
+axes[1,1].xaxis.set_major_formatter(
+    plt.FuncFormatter(lambda x, _: f"{x:.0f}%"))
+
+plt.tight_layout()
+plt.savefig(r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\notebooks\business_brief.png", dpi=200, bbox_inches="tight",facecolor="white")
+plt.show()
 # %%
