@@ -38,6 +38,47 @@ c1.metric("Gross Revenue",  f"£{gross_revenue/1e6:.2f}M")
 c2.metric("Net Revenue",    f"£{net_revenue/1e6:.2f}M")
 c3.metric("Lost to Returns",f"£{return_value/1e3:.0f}K")
 c4.metric("Total Customers",f"{n_customers:,}")
+# side bar
+st.divider()
+page = st.sidebar.radio(
+    "Navigate",
+    ["Overview", "Revenue & Time", "Customer Segments", "Product Analysis"]
+)
+if page== "Revenue & Time":
+    # monthly trend
+    st.subheader("Revenue over time")
+    sales["Month"]=sales["InvoiceDate"].dt.to_period("M").astype(str)
+    monthly=sales.groupby("Month")["Revenue"].sum().reset_index()
 
+    fig= px.line(monthly, x="Month", y="Revenue",
+                 markers=True,
+                 color_discrete_sequence=["steelblue"])
+    fig.update_layout(yaxis_tickprefix="£", height=400)
+    st.plotly_chart(fig, use_container_width=True)
+    # Daily trend
+    st.subheader("Daily revenue trend")
+    sales["Day"]=sales["InvoiceDate"].dt.day_name()
+    daily=sales.groupby("Day")["Revenue"].sum().reset_index()
+    day_order = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+    ]
+
+    daily["Day"] = pd.Categorical(
+        daily["Day"],
+        categories=day_order,
+     ordered=True
+    )
+
+    daily = daily.sort_values("Day")
+    
+    fig=px.bar(daily, x="Revenue", y="Day", orientation="h", color_discrete_sequence=["orange"])
+    fig.update_layout(xaxis_tickprefix="£", height=400)
+    st.plotly_chart(fig, use_container_width=True )
 
 
