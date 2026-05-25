@@ -80,5 +80,11 @@ if page== "Revenue & Time":
     fig=px.bar(daily, x="Revenue", y="Day", orientation="h", color_discrete_sequence=["orange"])
     fig.update_layout(xaxis_tickprefix="£", height=400)
     st.plotly_chart(fig, use_container_width=True )
-
+    # Top 10 country
+    st.subheader("Top 10 countries (ex UK)")
+    mask_ex_uk= sales["Country"]!="United Kingdom"
+    country_revenue=sales[mask_ex_uk].groupby("Country")["Revenue"].sum().sort_values(ascending=False).head(10).reset_index()
+    fig=px.bar(country_revenue, x="Revenue", y="Country", orientation="h" ,color_discrete_sequence=["blue"])
+    fig.update_layout(xaxis_tickprefix="£", height=400)
+    st.plotly_chart(fig, use_container_width=True)
 
