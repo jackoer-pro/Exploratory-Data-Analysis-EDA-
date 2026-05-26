@@ -87,4 +87,37 @@ if page== "Revenue & Time":
     fig=px.bar(country_revenue, x="Revenue", y="Country", orientation="h" ,color_discrete_sequence=["blue"])
     fig.update_layout(xaxis_tickprefix="£", height=400)
     st.plotly_chart(fig, use_container_width=True)
+# build 2 bar chart side by side indicates customer and revenue percentage per segment
+elif page=="Customer Segments":
+    seg_summary=rfm.groupby("Seg").agg(
+        Customers= ("CustomerID", "count"),    
+        Revenue=("Monetary", "sum")           
+    ).reset_index()
+    seg_summary["Rev_pct"]=(seg_summary["Revenue"]/seg_summary["Revenue"].sum()*100).round(1)
+    col1,col2=st.columns(2)
+    with col1:
+        st.subheader("Customers per Segment")
+        fig1=px.bar(seg_summary.sort_values("Customers"), x="Seg",y="Customers",color_discrete_sequence=["steelblue"] )
+        st.plotly_chart(fig1, use_container_width=True, key="customers_chart")
+    with col2:
+        st.subheader("Revenue % per Segment")
+        fig2=px.bar(seg_summary, x="Seg",y="Rev_pct",color_discrete_sequence=["orange"], labels={"Rev_pct": "Revenue % per Segment "} )
+        st.plotly_chart(fig2, use_container_width=True, key="revenue_chart")
+    # scateter plot between recency and moentary
+    st.subheader("Recency and Monetary")
+    fig3 = px.scatter(rfm, x="Recency", y="Monetary", 
+                  color="Seg", opacity=0.5,
+                  hover_data=["CustomerID", "Frequency"],
+                  labels={"Recency": "Days since last purchase",
+                          "Monetary": "Total spend (£)"})
+    st.plotly_chart(fig3, use_container_width=True, key="scatter_chart")
+    # customer table
+    st.subheader("Customer Table")
+    selected = st.multiselect("Filter by segment", 
+                           options=rfm["Seg"].unique(),
+                           default=["Champion", "At risk"])
+    filtered = rfm[rfm["Seg"].isin(selected)]
+    st.dataframe(filtered, use_container_width=True)
+
+    
 
