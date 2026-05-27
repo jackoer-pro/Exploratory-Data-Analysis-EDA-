@@ -10,7 +10,7 @@ st.set_page_config(
 # load data
 @st.cache_data
 def load_data():
-    path = r"C:\Users\Trach\OneDrive\Desktop\python journey\Project_4\data\processed\\"
+    path = "data/processed/"
     
     sales=pd.read_csv(path + "sales.csv",   parse_dates=["InvoiceDate"])
     returns=pd.read_csv(path+ "returns.csv", parse_dates=["InvoiceDate"])
