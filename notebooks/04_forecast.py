@@ -12,6 +12,7 @@ print(monthly)
 print(f"\nRows: {len(monthly)}")
 print(f"Date range: {monthly['ds'].min()} → {monthly['ds'].max()}")
 # %%
+# verify that the amount of data is not enough to create powerful predictions
 from prophet import Prophet
 model=Prophet(
     growth = "flat",
