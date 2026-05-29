@@ -42,7 +42,7 @@ c4.metric("Total Customers",f"{n_customers:,}")
 st.divider()
 page = st.sidebar.radio(
     "Navigate",
-    ["Overview", "Revenue & Time", "Customer Segments", "Product Analysis"]
+    ["Overview", "Revenue & Time", "Customer Segments", "Product Analysis","Forecast"]
 )
 if page== "Revenue & Time":
     # monthly trend
@@ -160,5 +160,60 @@ elif page == "Product Analysis":
               color_discrete_sequence=["coral"])
     fig6.update_layout(xaxis_ticksuffix="%", height=500)
     st.plotly_chart(fig6, use_container_width=True)
+elif page=="Forecast":
+    st.subheader("Revenue Forecast — Next 3 Months")
+    st.caption("Based on seasonal patterns from Dec 2010 – Nov 2011")
+    # Build forecast model
+    from prophet import Prophet
+    sales["Month"]=sales["InvoiceDate"].dt.to_period("M")
+    monthly=sales.groupby("Month")["Revenue"].sum().reset_index()
+    monthly.columns = ["ds", "y"]
+    monthly["ds"]   = monthly["ds"].dt.to_timestamp()
+    monthly = monthly[:-1]
+    model = Prophet(
+        growth = "flat",
+        yearly_seasonality = True,
+        weekly_seasonality = False,
+        daily_seasonality  = False,
+    )
+    model.fit(monthly)
+    future   = model.make_future_dataframe(periods=3, freq="MS")
+    forecast = model.predict(future)
+    # Plot with plotly
+    fig = px.line()
+    fig.add_scatter(x=monthly["ds"], y=monthly["y"],
+                    name="Actual", line=dict(color="steelblue"))
+    fig.add_scatter(x=forecast["ds"].tail(3), y=forecast["yhat"].tail(3),
+                    name="Forecast", line=dict(color="orange", dash="dash"))
+    fig.update_layout(
+        yaxis_tickprefix = "£",
+        height           = 400,
+        xaxis_title      = "",
+        yaxis_title      = "Revenue (£)"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    # Forecast table
+    st.subheader("Predicted revenue — next 3 months")
+    st.caption("Note: Confidence intervals are equal due to limited data (12 months). Treat as point estimates only.")
+    forecast_table = forecast[["ds","yhat","yhat_lower","yhat_upper"]].tail(3).copy()
+    forecast_table.columns = ["Month","Predicted","Lower","Upper"]
+    forecast_table["Month"]     = forecast_table["Month"].dt.strftime("%B %Y")
+    forecast_table["Predicted"] = forecast_table["Predicted"].apply(lambda x: f"£{x:,.0f}")
+    forecast_table["Lower"]     = forecast_table["Lower"].apply(lambda x: f"£{x:,.0f}")
+    forecast_table["Upper"]     = forecast_table["Upper"].apply(lambda x: f"£{x:,.0f}")
+    st.dataframe(forecast_table, use_container_width=True, hide_index=True)
     
+    # Honest conclusion
+    st.divider()
+    st.warning("""
+    **Model limitation:** Based on only 12 months of data. 
+    Prophet requires 2-3 years minimum for reliable forecasting.
+    Treat these predictions as seasonal estimates, not precise forecasts.
+    For wholesale businesses, direct customer outreach is more reliable 
+    than statistical forecasting for inventory planning.
+    """)
+
+
+
+
 

@@ -18,8 +18,6 @@ model=Prophet(
     growth = "flat",
     yearly_seasonality=True,
     weekly_seasonality=False,
-    uncertainty_samples=1000,
-    interval_width=0.80,
     daily_seasonality=False
 )
 model.fit(monthly)
@@ -30,4 +28,16 @@ print(future)
 # show the lowest prediction and highest the range of it (with confidence around 80%)
 forecast = model.predict(future)
 print(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail(6))
+# %%
+## There is not enough data so we assume the pattern stays the same every year, adjusted just by seasonal pattern
+avg_monthly=monthly["y"].mean()
+monthly["month_num"]=monthly["ds"].dt.month
+seasonal_index=monthly.groupby("month_num")["y"].mean()/avg_monthly
+
+print("Seasonal indices:")
+print(seasonal_index.round(2))
+predict=[12,1,2]
+for m in predict:
+    predict_revenue=avg_monthly*seasonal_index[m]
+    print(f"Month {m}: £{predict_revenue:,.0f}")
 # %%
